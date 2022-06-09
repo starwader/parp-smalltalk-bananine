@@ -12,7 +12,10 @@ Collaborators:
 * ..."
 
 Object subclass: Game [
-    | isGameOver |
+    | isGameOver 
+      location 
+      paths 
+      locationDesc |
 
     introductionText := #(
      'Jest rok 1950.'
@@ -310,7 +313,7 @@ Object subclass: Game [
     ).
 
     kokoAttack := #(
-    'Koko patrzy na ciebie zazkoczony,'
+    'Koko patrzy na ciebie zaskoczony,'
     'jednym szybkim ruchem wyrywa ci wszystkie kończyny.'
     ).
 
@@ -347,7 +350,31 @@ Object subclass: Game [
     ]
 
     init [
-        isGameOver := false
+        isGameOver := false.
+        location := 'dżungla'.
+        paths := Dictionary new.
+        paths at: 'dżungla' put: #(('n' 'polanka')).
+        paths at: 'polanka' put: #(('s' 'dżungla') ('w' 'klasztor') ('e' 'rozwidlenie')).
+        paths at: 'klasztor' put: #(('n' 'jaskinia_próby') ('e' 'polanka')).
+        paths at: 'jaskinia_próby' put: #(('s' 'klasztor')).
+        paths at: 'rozwidlenie' put: #(('w' 'polanka') ('n' 'kamieniołom') ('s' 'jaskinia_kobry') ('e' 'dziedziniec')).
+        paths at: 'kamieniołom' put: #(('s' 'rozwidlenie')).
+        paths at: 'jaskinia_kobry' put: #(('n' 'rozwidlenie')).
+        paths at: 'dziedziniec' put: #(('w' 'rozwidlenie') ('e' 'fort')).
+        paths at: 'fort' put: #(('w' 'dziedziniec')).
+
+        locationDesc := Dictionary new.
+        locationDesc at: 'polanka' put: polankaDesc.
+        locationDesc at: 'dżungla' put: dzunglaDesc.
+        locationDesc at: 'klasztor' put: klasztorDesc.
+        locationDesc at: 'dziedziniec' put: dziedziniecDesc.
+        locationDesc at: 'fort' put: fortDesc.
+        locationDesc at: 'jaskinia_kobry' put: jkobryDesc.
+        locationDesc at: 'jaskinia_próby' put: jprobyDesc.
+        locationDesc at: 'kamieniołom' put: kamieniolomDesc.
+        locationDesc at: 'rozwidlenie' put: rozwidlenieDesc.
+
+
     ]
 
     "Print strings from array in separate lines."
@@ -366,6 +393,24 @@ Object subclass: Game [
     readCommand [
         Transcript show: '> '.
         ^ FileStream stdin nextLine
+    ]
+
+    printLocationDescription [
+        self printLines: (locationDesc at: location).
+    ]
+
+    go: path [ "todo"
+        | exits |
+        exits := paths at: location.
+        exits do: [ :exit |
+            (exit at: 1) = path ifTrue: [
+                location := (exit at: 2).
+                self printLocationDescription.
+                ^nil
+            ]
+        ].
+        self printLines: #('Nie możesz tędy iść').
+        ^nil
     ]
 
     "Run the game."
@@ -391,6 +436,11 @@ Object subclass: Game [
                 isUnknown := false
             ].
                 
+            (cmd = 'n') | (cmd = 's') | (cmd = 'e') | (cmd = 'w') ifTrue: [
+                self go: cmd.
+                isUnknown := false
+            ].
+
             isUnknown ifTrue: [
                 self printLines: #('Nieznana komenda' '')
             ]
