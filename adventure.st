@@ -1,21 +1,21 @@
-"The germ of a text adventure game
-Marcin Szlenk 2022"
-
-"Game class
-
-Responsibilities:
-* print/read outputs/inputs
-* handle game loop
-* handle 'instructions' and 'halt' commands
-
-Collaborators:
-* ..."
+"The quest of Bananine
+Jakub Budrewicz
+Marcel Jarosz
+Przemysław Rozwałka
+2022"
 
 Object subclass: Game [
     | isGameOver 
       location 
-      paths 
-      locationDesc |
+      locationPaths 
+      locationDesc 
+      inventory 
+      itemsAtLocations 
+      npcsAtLocations
+      containersAtLocations 
+      tasks
+      finishedTasks
+      skills |
 
     introductionText := #(
      'Jest rok 1950.'
@@ -349,19 +349,105 @@ Object subclass: Game [
         ^g
     ]
 
+    pickup: item [
+        ((itemsAtLocations at: location) includes: item) ifTrue: [
+            | newItems |
+            newItems := Set new.
+            (itemsAtLocations at: location) do: [ 
+                :it |
+                it ~= item ifTrue: [ newItems add: it ]
+            ].
+            itemsAtLocations at: location put: newItems.
+            inventory add: item.
+            self printLinesNoCr: #('Podniosłeś '). 
+            self printLines: (Array with: item).
+            ^true
+        ].
+        self printLines: #('Nie ma tu takiego przedmiotu' '').
+        ^false
+    ]
+
+
+    drop: item [
+        (inventory includes: item) ifTrue: [
+            | newItems |
+            newItems := Set new.
+            inventory do: [ 
+                :it |
+                it ~= item ifTrue: [ newItems add: it ]
+            ].
+            (itemsAtLocations at: location) add: item.
+            inventory := newItems.
+            self printLinesNoCr: #('Upuściłeś '). 
+            self printLines: (Array with: item).
+            ^true
+        ].
+        self printLines: #('Nie masz takiego przedmiotu' '').
+        ^false
+    ]
+
+    die [
+        self printLines: #('Umarłeś' '').
+        isGameOver := true
+    ]
+
+    win [
+        self printLines: #('Zwycięstwo!!!' '').
+        isGameOver := true
+    ]
+
     init [
         isGameOver := false.
         location := 'dżungla'.
-        paths := Dictionary new.
-        paths at: 'dżungla' put: #(('n' 'polanka')).
-        paths at: 'polanka' put: #(('s' 'dżungla') ('w' 'klasztor') ('e' 'rozwidlenie')).
-        paths at: 'klasztor' put: #(('n' 'jaskinia_próby') ('e' 'polanka')).
-        paths at: 'jaskinia_próby' put: #(('s' 'klasztor')).
-        paths at: 'rozwidlenie' put: #(('w' 'polanka') ('n' 'kamieniołom') ('s' 'jaskinia_kobry') ('e' 'dziedziniec')).
-        paths at: 'kamieniołom' put: #(('s' 'rozwidlenie')).
-        paths at: 'jaskinia_kobry' put: #(('n' 'rozwidlenie')).
-        paths at: 'dziedziniec' put: #(('w' 'rozwidlenie') ('e' 'fort')).
-        paths at: 'fort' put: #(('w' 'dziedziniec')).
+        inventory := Set new.
+        tasks := Set new.
+        finishedTasks := Set new.
+        skills := Set new.
+
+        itemsAtLocations := Dictionary new.
+        itemsAtLocations at: 'dżungla' put: #('banan').
+        itemsAtLocations at: 'polanka' put: #().
+        itemsAtLocations at: 'klasztor' put: #().
+        itemsAtLocations at: 'jaskinia_próby' put: #().
+        itemsAtLocations at: 'rozwidlenie' put: #().
+        itemsAtLocations at: 'kamieniołom' put: #().
+        itemsAtLocations at: 'jaskinia_kobry' put: #().
+        itemsAtLocations at: 'dziedziniec' put: #().
+        itemsAtLocations at: 'fort' put: #().
+
+        npcsAtLocations := Dictionary new.
+        npcsAtLocations at: 'dżungla' put: #().
+        npcsAtLocations at: 'polanka' put: #('Koko' 'Bobo').
+        npcsAtLocations at: 'klasztor' put: #('Uebe').
+        npcsAtLocations at: 'jaskinia_próby' put: #('Gnom').
+        npcsAtLocations at: 'rozwidlenie' put: #().
+        npcsAtLocations at: 'kamieniołom' put: #().
+        npcsAtLocations at: 'jaskinia_kobry' put: #('Pająk').
+        npcsAtLocations at: 'dziedziniec' put: #('Andrzej').
+        npcsAtLocations at: 'fort' put: #().
+
+
+        containersAtLocations := Dictionary new.
+        containersAtLocations at: 'dżungla' put: #('beczka').
+        containersAtLocations at: 'polanka' put: #().
+        containersAtLocations at: 'klasztor' put: #().
+        containersAtLocations at: 'jaskinia_próby' put: #().
+        containersAtLocations at: 'rozwidlenie' put: #().
+        containersAtLocations at: 'kamieniołom' put: #('skrzynia').
+        containersAtLocations at: 'jaskinia_kobry' put: #().
+        containersAtLocations at: 'dziedziniec' put: #().
+        containersAtLocations at: 'fort' put: #().
+
+        locationPaths := Dictionary new.
+        locationPaths at: 'dżungla' put: #(('n' 'polanka')).
+        locationPaths at: 'polanka' put: #(('s' 'dżungla') ('w' 'klasztor') ('e' 'rozwidlenie')).
+        locationPaths at: 'klasztor' put: #(('n' 'jaskinia_próby') ('e' 'polanka')).
+        locationPaths at: 'jaskinia_próby' put: #(('s' 'klasztor')).
+        locationPaths at: 'rozwidlenie' put: #(('w' 'polanka') ('n' 'kamieniołom') ('s' 'jaskinia_kobry') ('e' 'dziedziniec')).
+        locationPaths at: 'kamieniołom' put: #(('s' 'rozwidlenie')).
+        locationPaths at: 'jaskinia_kobry' put: #(('n' 'rozwidlenie')).
+        locationPaths at: 'dziedziniec' put: #(('w' 'rozwidlenie') ('e' 'fort')).
+        locationPaths at: 'fort' put: #(('w' 'dziedziniec')).
 
         locationDesc := Dictionary new.
         locationDesc at: 'polanka' put: polankaDesc.
@@ -373,13 +459,26 @@ Object subclass: Game [
         locationDesc at: 'jaskinia_próby' put: jprobyDesc.
         locationDesc at: 'kamieniołom' put: kamieniolomDesc.
         locationDesc at: 'rozwidlenie' put: rozwidlenieDesc.
-
-
     ]
 
     "Print strings from array in separate lines."
+
+    printList: argsDict [
+        | array description |
+        description := (argsDict at: 'description').
+        array := (argsDict at: 'array').
+        ((array size) > 0) ifTrue: [
+            Transcript show: description; cr.
+        ].
+        array do: [ :string | Transcript show: ('- ', string); cr ]
+    ]
+
     printLines: anArray [
         anArray do: [ :string | Transcript show: string; cr ]
+    ]
+
+    printLinesNoCr: anArray [
+        anArray do: [ :string | Transcript show: string ]
     ]
 
     printIntroduction [
@@ -396,15 +495,36 @@ Object subclass: Game [
     ]
 
     printLocationDescription [
+        | items npcs containers printListArgs | 
+        items := itemsAtLocations at: location.
+        npcs := npcsAtLocations at: location.
+        containers := containersAtLocations at: location.
+
         self printLines: (locationDesc at: location).
+        printListArgs := Dictionary new.
+
+        "print items"
+        printListArgs at: 'array' put: items.
+        printListArgs at: 'description' put: 'Możesz podnieść:'.
+        self printList: printListArgs.
+
+        "print npcs"
+        printListArgs at: 'array' put: npcs.
+        printListArgs at: 'description' put: 'Dostępne postacie:'.
+        self printList: printListArgs.
+
+        "print containers"
+        printListArgs at: 'array' put: containers.
+        printListArgs at: 'description' put: 'Kontenery:'.
+        self printList: printListArgs.
     ]
 
-    go: path [ "todo"
-        | exits |
-        exits := paths at: location.
-        exits do: [ :exit |
-            (exit at: 1) = path ifTrue: [
-                location := (exit at: 2).
+    go: side [ 
+        | paths |
+        paths := locationPaths at: location.
+        paths do: [ :dest |
+            (dest at: 1) = side ifTrue: [
+                location := (dest at: 2).
                 self printLocationDescription.
                 ^nil
             ]
@@ -415,30 +535,51 @@ Object subclass: Game [
 
     "Run the game."
     run [
-        | cmd isUnknown |
+        | cmd isUnknown firstCmd cmdSize|
 
         self printIntroduction.
         self printInstructions.
 
         "Game loop."
         [isGameOver] whileFalse: [
-
             isUnknown := true.
-            cmd := self readCommand.
+            cmd := self readCommand substrings: ' '.
+            cmdSize := cmd size.
 
-            cmd = 'pomoc' ifTrue: [
-                self printInstructions.
-                isUnknown := false
-            ].
+            (cmdSize > 0) ifTrue: [
+                firstCmd := cmd at: 1.
 
-            cmd = 'koniec' ifTrue: [
-                isGameOver := true.
-                isUnknown := false
-            ].
-                
-            (cmd = 'n') | (cmd = 's') | (cmd = 'e') | (cmd = 'w') ifTrue: [
-                self go: cmd.
-                isUnknown := false
+                (cmdSize = 2) ifTrue: [
+                    firstCmd = 'podnieś' ifTrue: [
+                        self pickup: (cmd at: 2).
+                        isUnknown := false
+                    ].
+
+                    firstCmd = 'upuść' ifTrue: [
+                        self drop: (cmd at: 2).
+                        isUnknown := false
+                    ].
+                ].
+
+                firstCmd = 'pomoc' ifTrue: [
+                    self printInstructions.
+                    isUnknown := false
+                ].
+
+                firstCmd = 'gdzie' ifTrue: [
+                    self printLocationDescription.
+                    isUnknown := false
+                ].
+
+                firstCmd = 'koniec' ifTrue: [
+                    isGameOver := true.
+                    isUnknown := false
+                ].
+                    
+                (firstCmd = 'n') | (firstCmd = 's') | (firstCmd = 'e') | (firstCmd = 'w') ifTrue: [
+                    self go: firstCmd.
+                    isUnknown := false
+                ].
             ].
 
             isUnknown ifTrue: [
