@@ -1,3 +1,47 @@
+podnieś banan
+otwórz beczka
+n
+rozmawiaj Bobo
+tak
+podnieś zepsuty_karabin
+rozmawiaj Koko
+tak
+w
+rozmawiaj Uebe
+n
+rozmawiaj Gnom
+człowiek
+rozmawiaj Uebe
+atakuj Uebe
+w
+e
+e
+s
+rozmawiaj Pająk
+atakuj Pająk
+podnieś portfel
+n
+w
+w
+rozmawiaj Uebe
+e
+e
+n
+otwórz skrzynia
+wyjmij Excaliber z skrzynia
+s
+e
+rozmawiaj Andrzej
+e
+atakuj Andrzej
+podnieś klucz_do_fortu
+e
+w
+w
+w
+rozmawiaj Koko
+w
+rozmawiaj Uebe
 "The quest of Bananine
 Jakub Budrewicz
 Marcel Jarosz
@@ -12,8 +56,7 @@ Object subclass: Game [
       inventory 
       itemsAtLocations 
       npcsAtLocations
-      containersAtLocations
-      containers 
+      containersAtLocations 
       tasks
       finishedTasks
       skills 
@@ -416,7 +459,6 @@ Object subclass: Game [
     addTask: task [
         self printString: ''.
         self printString: ('Dodano nowe zadanie: ', task).
-        self printString: ''.
         tasks add: task
     ]
 
@@ -424,32 +466,28 @@ Object subclass: Game [
         tasks remove: task.
         finishedTasks add: task.
         self printString: ''.
-        self printString: ('Zadanie zakończone: ', task).
-        self printString: ''
+        self printString: ('Zadanie zakończone: ', task)
     ]
 
     removeFromInventory: item [
         inventory remove: item.
         self printString: ''.
-        self printString: ('Przedmiot ', item, ' został usunięty z ekwipunku.').
-        self printString: ''
+        self printString: ('Przedmiot ', item, ' został usunięty z ekwipunku.')
     ]
 
     addToInventory: item [
         inventory add: item.
         self printString: ''.
-        self printString: ('Przedmiot ', item, ' został dodany do ekwipunku.').
-        self printString: ''
+        self printString: ('Przedmiot ', item, ' został dodany do ekwipunku.')
     ]
     
     newItem: item [
         | newLocationItems |
-        newLocationItems := itemsAtLocations at: location.
+        newLocationItems := itemsAtLocations at: location asSet.
         newLocationItems add: item.
         itemsAtLocations at: location put: newLocationItems.
         self printString: ''.
-        self printString: ('Możesz podnieść nowy przedmiot: ', item).
-        self printString: ''
+        self printString: ('Możesz podnieść nowy przedmiot: ', item)
     ]
 
     addSkill: skill [
@@ -457,14 +495,6 @@ Object subclass: Game [
         self printString: ''.
         self printString: ('Nowa umiejętność: ', skill)
     ]
-
-    kill: npc [
-        | newNpcs |
-        newNpcs := npcsAtLocations at: location.
-        newNpcs remove: npc.
-        npcsAtLocations at: location put: newNpcs
-    ]
-
 
     talk: npc [
         | npcsHere cmd |
@@ -502,8 +532,8 @@ Object subclass: Game [
                             self removeFromInventory: 'portfel'.
                             self addToInventory: 'klucz'.
                             self addSkill: 'Tiu Fiu'.
-                            self finishTask: taskFindWallet.
-                            self addTask: taskKillBadGuys.
+                            self finishTask taskFindWallet.
+                            self addTask taskKillBadGuys.
                             ^nil
                         ].
                         self printLines: uebeWalletTask.
@@ -604,7 +634,6 @@ Object subclass: Game [
             (npc = 'Andrzej') ifTrue: [ 
                 (inventory includes: 'Excaliber') ifTrue: [
                     self printLines: andrzejKill.
-                    self kill: 'Andrzej'.
                     self newItem: 'klucz_do_fortu'.
                     ^nil
                 ].
@@ -616,7 +645,6 @@ Object subclass: Game [
             (npc = 'Pająk') ifTrue: [ 
                 (skills includes: 'zaklęcie Potassium') ifTrue: [
                     self printLines: pajakKill.
-                    self kill: 'Pająk'.
                     self newItem: 'portfel'.
                     ^nil
                 ].
@@ -633,7 +661,6 @@ Object subclass: Game [
 
 
     init [
-        | tmpSet emptySet |
         isGameOver := false.
         location := 'dżungla'.
         inventory := Set new.
@@ -646,40 +673,27 @@ Object subclass: Game [
         npcDialogs at: 'Pająk' put: pajakDefault.
 
         itemsAtLocations := Dictionary new.
-
-        tmpSet := Set new.
-        tmpSet add: 'banan'.
-        itemsAtLocations at: 'dżungla' put: tmpSet.
-        itemsAtLocations at: 'polanka' put: Set new.
-        itemsAtLocations at: 'klasztor' put: Set new.
-        itemsAtLocations at: 'jaskinia_próby' put: Set new.
-        itemsAtLocations at: 'rozwidlenie' put: Set new.
-        itemsAtLocations at: 'kamieniołom' put: Set new.
-        itemsAtLocations at: 'jaskinia_kobry' put: Set new.
-        itemsAtLocations at: 'dziedziniec' put: Set new.
-        itemsAtLocations at: 'fort' put: Set new.
+        itemsAtLocations at: 'dżungla' put: #('banan').
+        itemsAtLocations at: 'polanka' put: #().
+        itemsAtLocations at: 'klasztor' put: #().
+        itemsAtLocations at: 'jaskinia_próby' put: #().
+        itemsAtLocations at: 'rozwidlenie' put: #().
+        itemsAtLocations at: 'kamieniołom' put: #().
+        itemsAtLocations at: 'jaskinia_kobry' put: #().
+        itemsAtLocations at: 'dziedziniec' put: #().
+        itemsAtLocations at: 'fort' put: #().
 
         npcsAtLocations := Dictionary new.
-        npcsAtLocations at: 'dżungla' put: Set new.
-        tmpSet := Set new.
-        tmpSet add: 'Koko'.
-        tmpSet add: 'Bobo'.
-        npcsAtLocations at: 'polanka' put: tmpSet.
-        tmpSet := Set new.
-        tmpSet add: 'Uebe'.
-        npcsAtLocations at: 'klasztor' put: tmpSet.
-        tmpSet := Set new.
-        tmpSet add: 'Gnom'.
-        npcsAtLocations at: 'jaskinia_próby' put: tmpSet.
-        npcsAtLocations at: 'rozwidlenie' put: Set new.
-        npcsAtLocations at: 'kamieniołom' put: Set new.
-        tmpSet := Set new.
-        tmpSet add: 'Pająk'.
-        npcsAtLocations at: 'jaskinia_kobry' put: tmpSet.
-        tmpSet := Set new.
-        tmpSet add: 'Andrzej'.
-        npcsAtLocations at: 'dziedziniec' put: tmpSet.
-        npcsAtLocations at: 'fort' put: Set new.
+        npcsAtLocations at: 'dżungla' put: #().
+        npcsAtLocations at: 'polanka' put: #('Koko' 'Bobo').
+        npcsAtLocations at: 'klasztor' put: #('Uebe').
+        npcsAtLocations at: 'jaskinia_próby' put: #('Gnom').
+        npcsAtLocations at: 'rozwidlenie' put: #().
+        npcsAtLocations at: 'kamieniołom' put: #().
+        npcsAtLocations at: 'jaskinia_kobry' put: #('Pająk').
+        npcsAtLocations at: 'dziedziniec' put: #('Andrzej').
+        npcsAtLocations at: 'fort' put: #().
+
 
         containersAtLocations := Dictionary new.
         containersAtLocations at: 'dżungla' put: #('beczka').
@@ -713,14 +727,6 @@ Object subclass: Game [
         locationDesc at: 'jaskinia_próby' put: jprobyDesc.
         locationDesc at: 'kamieniołom' put: kamieniolomDesc.
         locationDesc at: 'rozwidlenie' put: rozwidlenieDesc.
-
-        containers := Dictionary new.
-        tmpSet := Set new.
-        tmpSet add: 'zgniły_banan'.
-        containers at: 'beczka' put: tmpSet.
-        tmpSet := Set new.
-        tmpSet add: 'Excaliber'.
-        containers at: 'skrzynia' put: tmpSet.
     ]
 
     "Print strings from array in separate lines."
@@ -731,8 +737,7 @@ Object subclass: Game [
         argsDict at: 'array' put: inventory.
         argsDict at: 'description' put: 'Ekwipunek:'.
         argsDict at: 'error' put: 'Nie masz nic w ekwipunku'.
-        self printList: argsDict.
-        self printString: ''
+        self printList: argsDict
     ]
 
     printSkills [
@@ -741,8 +746,7 @@ Object subclass: Game [
         argsDict at: 'array' put: skills.
         argsDict at: 'description' put: 'Umiejętności:'.
         argsDict at: 'error' put: 'Nie masz żadnych umiejętności :('.
-        self printList: argsDict.
-        self printString: ''
+        self printList: argsDict
     ]
 
     printNpcs [
@@ -751,9 +755,7 @@ Object subclass: Game [
         argsDict at: 'array' put: (npcsAtLocations at: location).
         argsDict at: 'description' put: 'Dostępne postacie:'.
         argsDict at: 'error' put: 'Nie ma tu żadnych postaci'.
-        self printList: argsDict.
-        self printString: ''
-
+        self printList: argsDict
     ]
 
     printTasks [ 
@@ -767,45 +769,7 @@ Object subclass: Game [
         argsDict at: 'array' put: finishedTasks.
         argsDict at: 'description' put: 'Zadania:'.
         argsDict at: 'error' put: 'Nie zakończyłeś jeszcze żadnego zadania'.
-        self printList: argsDict.
-        self printString: ''
-    ]
-
-    open: container [
-        | argsDict |
-        ((containersAtLocations at: location) includes: container) ifTrue: [
-            argsDict := Dictionary new.
-            argsDict at: 'array' put: (containers at: container).
-            argsDict at: 'description' put: ('Zawartość ', container, ':').
-            argsDict at: 'error' put: 'Ten kontener jest pusty'.
-            self printList: argsDict.
-            self printString: ''.
-            ^nil
-        ].
-        self printLines: #('Nie ma tu takiego kontenera' '').
-        ^nil
-    ]
-
-    takeOut: argsDict [ 
-        | containersHere container item newItems |
-        container := (argsDict at: 'container').
-        item := (argsDict at: 'item').
-
-        containersHere := (containersAtLocations at: location).
-        (containersHere includes: container) ifTrue: [
-            newItems:= (containers at: container).
-            (newItems includes: item) ifFalse: [
-                self printString: ('W ', container, ' nie ma przedmiotu ', item).
-                self printString: ''.
-                ^nil
-            ].
-            newItems remove: item.
-            containers at: container put: newItems.
-            self addToInventory: item.
-            ^nil
-        ].
-        self printLines: #('Nie ma tu takiego kontenera' '').
-        ^nil
+        self printList: argsDict
     ]
 
     printList: argsDict [
@@ -861,7 +825,6 @@ Object subclass: Game [
         containers := containersAtLocations at: location.
 
         self printLines: (locationDesc at: location).
-        self printString: ''.
         printListArgs := Dictionary new.
 
         "print items"
@@ -878,28 +841,14 @@ Object subclass: Game [
         printListArgs at: 'array' put: containers.
         printListArgs at: 'description' put: 'Kontenery:'.
         self printList: printListArgs.
-        self printString: ''.
     ]
 
     go: side [ 
-        | paths destLoc |
+        | paths |
         paths := locationPaths at: location.
         paths do: [ :dest |
             (dest at: 1) = side ifTrue: [
-                destLoc := dest at: 2.
-                (destLoc = 'fort') ifTrue: [
-                    (inventory includes: 'klucz_do_fortu') ifFalse: [
-                        self printLines: #('Potrzebujesz klucza, aby tu wejść' '').
-                        ^nil
-                    ]
-                ].
-                location := destLoc.
-                (location = 'fort') ifTrue: [
-                    (tasks includes: taskKillBadGuys) ifTrue: [
-                        self printLines: killBadGuysText.
-                        self finishTask: taskKillBadGuys.
-                    ]
-                ].
+                location := (dest at: 2).
                 self printLocationDescription.
                 ^nil
             ]
@@ -937,11 +886,6 @@ Object subclass: Game [
                         isUnknown := false
                     ].
 
-                    firstCmd = 'otwórz' ifTrue: [
-                        self open: (cmd at: 2).
-                        isUnknown := false
-                    ].
-
                     firstCmd = 'rozmawiaj' ifTrue: [
                         self talk: (cmd at: 2).
                         isUnknown := false
@@ -952,20 +896,6 @@ Object subclass: Game [
                         isUnknown := false
                     ].
      
-                ].
-
-                (cmdSize = 4) ifTrue: [
-                    | argsDict container item |
-                    argsDict := Dictionary new.
-                    firstCmd = 'wyjmij' ifTrue: [
-                        item := (cmd at: 2) asString.
-                        container := (cmd at: 4) asString.
-                        argsDict at: 'item' put: item.
-                        argsDict at: 'container' put: container.
-                        self takeOut: argsDict.
-                        
-                        isUnknown := false
-                    ].
                 ].
 
                 firstCmd = 'pomoc' ifTrue: [
