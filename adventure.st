@@ -774,6 +774,12 @@ Object subclass: Game [
     open: container [
         | argsDict |
         ((containersAtLocations at: location) includes: container) ifTrue: [
+            (container = 'skrzynia') ifTrue: [
+                (inventory includes: 'klucz') ifFalse: [
+                    self printLines: #('Nie masz niczego co może otworzyć ten kontener' '').
+                    ^nil
+                ]
+            ]. 
             argsDict := Dictionary new.
             argsDict at: 'array' put: (containers at: container).
             argsDict at: 'description' put: ('Zawartość ', container, ':').
@@ -791,8 +797,16 @@ Object subclass: Game [
         container := (argsDict at: 'container').
         item := (argsDict at: 'item').
 
+
+
         containersHere := (containersAtLocations at: location).
         (containersHere includes: container) ifTrue: [
+            (container = 'skrzynia') ifTrue: [
+                (inventory includes: 'klucz') ifFalse: [
+                    self printLines: #('Nie masz niczego co może otworzyć ten kontener' '').
+                    ^nil
+                ]
+            ]. 
             newItems:= (containers at: container).
             (newItems includes: item) ifFalse: [
                 self printString: ('W ', container, ' nie ma przedmiotu ', item).
@@ -802,6 +816,34 @@ Object subclass: Game [
             newItems remove: item.
             containers at: container put: newItems.
             self addToInventory: item.
+            ^nil
+        ].
+        self printLines: #('Nie ma tu takiego kontenera' '').
+        ^nil
+    ]
+
+    putInto: argsDict [ 
+        | containersHere container item newItems |
+        container := (argsDict at: 'container').
+        item := (argsDict at: 'item').
+
+        containersHere := (containersAtLocations at: location).
+        (containersHere includes: container) ifTrue: [
+            (container = 'skrzynia') ifTrue: [
+                (inventory includes: 'klucz') ifFalse: [
+                    self printLines: #('Nie masz niczego co może otworzyć ten kontener' '').
+                    ^nil
+                ]
+            ]. 
+            newItems:= (containers at: container).
+            (inventory includes: item) ifFalse: [
+                self printString: ('Nie posiadasz przedmiotu ', item).
+                self printString: ''.
+                ^nil
+            ].
+            self removeFromInventory: item.
+            newItems add: item.
+            containers at: container put: newItems.
             ^nil
         ].
         self printLines: #('Nie ma tu takiego kontenera' '').
@@ -957,13 +999,18 @@ Object subclass: Game [
                 (cmdSize = 4) ifTrue: [
                     | argsDict container item |
                     argsDict := Dictionary new.
+                    item := (cmd at: 2) asString.
+                    container := (cmd at: 4) asString.
+                    argsDict at: 'item' put: item.
+                    argsDict at: 'container' put: container.
+
                     firstCmd = 'wyjmij' ifTrue: [
-                        item := (cmd at: 2) asString.
-                        container := (cmd at: 4) asString.
-                        argsDict at: 'item' put: item.
-                        argsDict at: 'container' put: container.
                         self takeOut: argsDict.
-                        
+                        isUnknown := false
+                    ].
+
+                    firstCmd = 'umieść' ifTrue: [
+                        self putInto: argsDict.
                         isUnknown := false
                     ].
                 ].
