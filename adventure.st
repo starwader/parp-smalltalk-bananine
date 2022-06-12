@@ -20,16 +20,26 @@ Object subclass: Game [
       npcDialogs |
 
     "tasks"
-
+    taskTalkUebe := 'porozmawiaj z Uebe'.
+    taskKillBadGuys := 'zabij kłusowników'.
+    taskAttackUebe := 'zaatakuj Uebe zaklęciem Potassium'.
+    taskFindWallet := 'odzyskaj portfel Uebe z jaskini Kobry'.
     taskTrial := 'przejdź próbę w jaskini próby'.
 
-    taskTalkUebe := 'porozmawiaj z Uebe'.
 
-    taskKillBadGuys := 'zabij kłusowników'.
+    "items"
+    itemKlucz := 'klucz'.
+    itemZepsutyKarabin := 'zepsuty_karabin'.
+    itemPortfel := 'portfel'.
+    itemKluczDoFortu := 'klucz_do_fortu'.
+    itemBanan := 'banan'.
+    itemZgnilyBanan := 'zgniły_banan'.
+    itemExcaliber := 'Excaliber'.
 
-    taskAttackUebe := 'zaatakuj Uebe zaklęciem Potassium'.
+    "skills"
+    skillTiuFiu := 'Tiu Fiu'.
+    skillPotassiumSpell := 'Zaklęcie Potassium'.
 
-    taskFindWallet := 'odzyskaj portfel Uebe z jaskini Kobry'.
 
     introductionText := #(
      'Jest rok 1950.'
@@ -383,6 +393,7 @@ Object subclass: Game [
     'HAHA, nie możesz mnie zabić.'
     ).
 
+
     Game class >> new [
         | g |
         g := super new.
@@ -390,6 +401,11 @@ Object subclass: Game [
         ^g
     ]
 
+    readCommand [
+        Transcript show: '> '.
+        ^ FileStream stdin nextLine
+    ]
+    
     pickup: item [
         ((itemsAtLocations at: location) includes: item) ifTrue: [
             | itemsHere |
@@ -418,12 +434,12 @@ Object subclass: Game [
 
     die [
         self printLines: #('Umarłeś' '').
-        isGameOver := true
+        self end.
     ]
 
     win [
         self printLines: #('Zwycięstwo!!!' '').
-        isGameOver := true
+        self end.
     ]
 
 
@@ -442,7 +458,7 @@ Object subclass: Game [
 
     addTask: task [
         self printString: ''.
-        self printString: ('    * Dodano nowe zadanie: ', task, ' *').
+        self printString: ('    * dodano nowe zadanie: ', task, ' *').
         self printString: ''.
         tasks add: task
     ]
@@ -500,7 +516,7 @@ Object subclass: Game [
         npcsHere := npcsAtLocations at: location.
         (npcsHere includes: npc) ifTrue: [
 
-            "interactactive talks"
+            "interactive talks"
 
             (npc = 'Uebe') ifTrue: [
                 (self noTaskYet: taskTalkUebe) ifTrue: [
@@ -519,7 +535,7 @@ Object subclass: Game [
                     (self noTaskYet: taskAttackUebe) ifTrue: [
                         self printLines: uebeAfterProba.
                         self addTask: taskAttackUebe.
-                        self addSkill: 'Zaklęcie Potassium'.
+                        self addSkill: skillPotassiumSpell.
                         ^nil
                     ].
                     (self activeTask: taskAttackUebe) ifTrue: [
@@ -527,10 +543,10 @@ Object subclass: Game [
                         ^nil
                     ].
                     (self activeTask: taskFindWallet) ifTrue: [
-                        (inventory includes: 'portfel') ifTrue: [ 
-                            self removeFromInventory: 'portfel'.
-                            self addToInventory: 'klucz'.
-                            self addSkill: 'Tiu Fiu'.
+                        (inventory includes: itemPortfel) ifTrue: [ 
+                            self removeFromInventory: itemPortfel.
+                            self addToInventory: itemKlucz.
+                            self addSkill: skillTiuFiu.
                             self finishTask: taskFindWallet.
                             self addTask: taskKillBadGuys.
                             ^nil
@@ -567,9 +583,9 @@ Object subclass: Game [
                         ^nil
                     ].
                     self printLines: gnomBadAnswer.
-                    (inventory includes: 'zepsuty_karabin') ifTrue: [
+                    (inventory includes: itemZepsutyKarabin) ifTrue: [
                         self printLines: gnomSeenGun.
-                        inventory remove: 'zepsuty_karabin'.
+                        inventory remove: itemZepsutyKarabin.
                         location := 'klasztor'.
                         self printLines: gnomTrialFinished.
                         self printLocationDescription.
@@ -606,13 +622,13 @@ Object subclass: Game [
             ]. 
 
             (npc = 'Bobo') ifTrue: [ 
-                (inventory includes: 'banan') ifTrue: [
+                (inventory includes: itemBanan) ifTrue: [
                     self printLines: boboBananaQuestion.
                     cmd := self readCommand.
                     (cmd = 'tak') ifTrue: [
                         self printLines: boboRevealGun.
-                        inventory remove: 'banan'.
-                        self newItem: 'zepsuty_karabin'.
+                        inventory remove: itemBanan.
+                        self newItem: itemZepsutyKarabin.
                         ^nil
                     ].
                     self printLines: boboSad.
@@ -658,10 +674,10 @@ Object subclass: Game [
             ]. 
 
             (npc = 'Andrzej') ifTrue: [ 
-                (inventory includes: 'Excaliber') ifTrue: [
+                (inventory includes: itemExcaliber) ifTrue: [
                     self printLines: andrzejKill.
                     self kill: 'Andrzej'.
-                    self newItem: 'klucz_do_fortu'.
+                    self newItem: itemKluczDoFortu.
                     ^nil
                 ].
                 self printLines: andrzejAttackDefault.
@@ -670,10 +686,10 @@ Object subclass: Game [
             ]. 
 
             (npc = 'Pająk') ifTrue: [ 
-                (skills includes: 'Zaklęcie Potassium') ifTrue: [
+                (skills includes: skillPotassiumSpell) ifTrue: [
                     self printLines: pajakKill.
                     self kill: 'Pająk'.
-                    self newItem: 'portfel'.
+                    self newItem: itemPortfel.
                     ^nil
                 ].
                 self printLines: pajakAttackDefault.
@@ -738,7 +754,7 @@ Object subclass: Game [
         npcsAtLocations at: 'fort' put: Set new.
 
         containersAtLocations := Dictionary new.
-        containersAtLocations at: 'dżungla' put: #('beczka').
+        containersAtLocations at: 'dżungla' put:#('beczka').
         containersAtLocations at: 'polanka' put: #().
         containersAtLocations at: 'klasztor' put: #().
         containersAtLocations at: 'jaskinia_próby' put: #().
@@ -772,156 +788,116 @@ Object subclass: Game [
 
         containers := Dictionary new.
         tmpSet := Set new.
-        tmpSet add: 'zgniły_banan'.
+        tmpSet add: itemZgnilyBanan.
         containers at: 'beczka' put: tmpSet.
         tmpSet := Set new.
-        tmpSet add: 'Excaliber'.
+        tmpSet add: itemExcaliber.
         containers at: 'skrzynia' put: tmpSet.
     ]
 
     "Print strings from array in separate lines."
 
     printInventory [
-        | argsDict |
-        argsDict := Dictionary new.
-        argsDict at: 'array' put: inventory.
-        argsDict at: 'description' put: 'Ekwipunek:'.
-        argsDict at: 'error' put: 'Nie masz nic w ekwipunku'.
-        self printList: argsDict.
+        self printArray: inventory description: 'Ekwipunek:' empty: 'Nie masz nic w ekwipunku'.
         self printString: ''
     ]
 
     printSkills [
-        | argsDict |
-        argsDict := Dictionary new.
-        argsDict at: 'array' put: skills.
-        argsDict at: 'description' put: 'Umiejętności:'.
-        argsDict at: 'error' put: 'Nie masz żadnych umiejętności :('.
-        self printList: argsDict.
+        self printArray: skills description: 'Umiejętności:' empty: 'Nie masz żadnych umiejętności :('.
         self printString: ''
     ]
 
     printNpcs [
-        | argsDict |
-        argsDict := Dictionary new.
-        argsDict at: 'array' put: (npcsAtLocations at: location).
-        argsDict at: 'description' put: 'Dostępne postacie:'.
-        argsDict at: 'error' put: 'Nie ma tu żadnych postaci'.
-        self printList: argsDict.
+        self printArray: (npcsAtLocations at: location) description: 'Dostępne postacie:' empty: 'Nie ma tu żadnych postaci'.
         self printString: ''
-
     ]
 
-    printTasks [ 
-        | argsDict |
-        argsDict := Dictionary new.
-        argsDict at: 'array' put: tasks.
-        argsDict at: 'description' put: 'Zadania:'.
-        argsDict at: 'error' put: 'Brak aktywnych zadań'.
-        self printList: argsDict.
 
-        argsDict at: 'array' put: finishedTasks.
-        argsDict at: 'description' put: 'Zadania:'.
-        argsDict at: 'error' put: 'Nie zakończyłeś jeszcze żadnego zadania'.
-        self printList: argsDict.
+    printTasks [ 
+        self printArray: tasks description: 'Zadania:' empty: 'Brak aktywnych zadań'.
+        self printArray: finishedTasks description: 'Ukończone zadania:' empty: 'Nie zakończyłeś jeszcze żadnego zadania'.
         self printString: ''
     ]
 
     open: container [
-        | argsDict |
-        ((containersAtLocations at: location) includes: container) ifTrue: [
-            (container = 'skrzynia') ifTrue: [
-                (inventory includes: 'klucz') ifFalse: [
-                    self printLines: #('Nie masz niczego co może otworzyć ten kontener' '').
-                    ^nil
-                ]
-            ]. 
-            argsDict := Dictionary new.
-            argsDict at: 'array' put: (containers at: container).
-            argsDict at: 'description' put: ('Zawartość ', container, ':').
-            argsDict at: 'error' put: 'Ten kontener jest pusty'.
-            self printList: argsDict.
+        ((self findAndOpenContainer: container) = nil) ifTrue: [
+            ^nil.
+        ].
+
+        self printArray: (containers at: container) description: ('Zawartość ', container, ':') empty: 'Ten kontener jest pusty'.
+        self printString: ''.
+        ^nil.
+    ]
+
+    findAndOpenContainer: container [
+        | containersHere |
+        containersHere := (containersAtLocations at: location).
+        (containersHere includes: container) ifFalse: [
+            self printLines: #('Nie ma tu takiego kontenera' '').
+            ^nil.
+        ].
+        (container = 'skrzynia') ifTrue: [
+            (inventory includes: itemKlucz) ifFalse: [
+                self printLines: #('Nie masz niczego co może otworzyć ten kontener' '').
+                ^nil.
+            ]
+        ].
+        ^container.
+    ]
+
+    takeOutItem: item from: container [
+        | newItems |
+
+        ((self findAndOpenContainer: container) = nil) ifTrue: [
+            ^nil.
+        ].
+
+        newItems:= (containers at: container).
+        (newItems includes: item) ifFalse: [
+            self printString: ('W ', container, ' nie ma przedmiotu ', item).
             self printString: ''.
             ^nil
         ].
-        self printLines: #('Nie ma tu takiego kontenera' '').
-        ^nil
+        newItems remove: item.
+        containers at: container put: newItems.
+        self addToInventory: item.
+        ^nil.
     ]
 
-    takeOut: argsDict [ 
-        | containersHere container item newItems |
-        container := (argsDict at: 'container').
-        item := (argsDict at: 'item').
+    putItem: item into: container [ 
+        | newItems |
 
+        ((self findAndOpenContainer: container) = nil) ifTrue: [
+            ^nil.
+        ].
 
-
-        containersHere := (containersAtLocations at: location).
-        (containersHere includes: container) ifTrue: [
-            (container = 'skrzynia') ifTrue: [
-                (inventory includes: 'klucz') ifFalse: [
-                    self printLines: #('Nie masz niczego co może otworzyć ten kontener' '').
-                    ^nil
-                ]
-            ]. 
-            newItems:= (containers at: container).
-            (newItems includes: item) ifFalse: [
-                self printString: ('W ', container, ' nie ma przedmiotu ', item).
-                self printString: ''.
-                ^nil
-            ].
-            newItems remove: item.
-            containers at: container put: newItems.
-            self addToInventory: item.
+        newItems:= (containers at: container).
+        (inventory includes: item) ifFalse: [
+            self printString: ('Nie posiadasz przedmiotu ', item).
+            self printString: ''.
             ^nil
         ].
-        self printLines: #('Nie ma tu takiego kontenera' '').
-        ^nil
+        self removeFromInventory: item.
+        newItems add: item.
+        containers at: container put: newItems.
+        ^nil.
     ]
 
-    putInto: argsDict [ 
-        | containersHere container item newItems |
-        container := (argsDict at: 'container').
-        item := (argsDict at: 'item').
-
-        containersHere := (containersAtLocations at: location).
-        (containersHere includes: container) ifTrue: [
-            (container = 'skrzynia') ifTrue: [
-                (inventory includes: 'klucz') ifFalse: [
-                    self printLines: #('Nie masz niczego co może otworzyć ten kontener' '').
-                    ^nil
-                ]
-            ]. 
-            newItems:= (containers at: container).
-            (inventory includes: item) ifFalse: [
-                self printString: ('Nie posiadasz przedmiotu ', item).
-                self printString: ''.
-                ^nil
-            ].
-            self removeFromInventory: item.
-            newItems add: item.
-            containers at: container put: newItems.
-            ^nil
+    printArray: arr description: desc empty: err [
+        ((arr size) > 0) ifTrue: [
+            Transcript show: desc; cr.
         ].
-        self printLines: #('Nie ma tu takiego kontenera' '').
-        ^nil
-    ]
-
-    printList: argsDict [
-        | array description error |
-        description := (argsDict at: 'description').
-        array := (argsDict at: 'array').
-        ((array size) > 0) ifTrue: [
-            Transcript show: description; cr.
-        ].
-        ((array size) = 0) ifTrue: [
-            (argsDict includesKey: 'error') ifTrue: [
-                error := (argsDict at: 'error').
-                Transcript show: error; cr.
+        ((arr size) = 0) ifTrue: [
+            (err = nil) ifFalse: [
+                Transcript show: err; cr.
             ]
         ].
-        array do: [ :string | Transcript show: ('- ', string); cr ]
+        arr do: [ :string | Transcript show: ('- ', string); cr ]
     ]
 
+    printArray: arr description: desc [
+        self printArray: arr description: desc empty: nil.
+    ]
 
     printString: string [
         Transcript show: string; cr 
@@ -947,35 +923,24 @@ Object subclass: Game [
         self printLines: instructionsText.
     ]
 
-    readCommand [
-        Transcript show: '> '.
-        ^ FileStream stdin nextLine
-    ]
-
     printLocationDescription [
-        | items npcs containers printListArgs | 
+        | items npcs containers | 
         items := itemsAtLocations at: location.
         npcs := npcsAtLocations at: location.
         containers := containersAtLocations at: location.
 
         self printLines: (locationDesc at: location).
         self printString: ''.
-        printListArgs := Dictionary new.
 
         "print items"
-        printListArgs at: 'array' put: items.
-        printListArgs at: 'description' put: 'Możesz podnieść:'.
-        self printList: printListArgs.
+        self printArray: items description: 'Możesz podnieść'.
 
         "print npcs"
-        printListArgs at: 'array' put: npcs.
-        printListArgs at: 'description' put: 'Dostępne postacie:'.
-        self printList: printListArgs.
+        self printArray: npcs description: 'Dostępne postacie:'.
 
         "print containers"
-        printListArgs at: 'array' put: containers.
-        printListArgs at: 'description' put: 'Kontenery:'.
-        self printList: printListArgs.
+        self printArray: containers description: 'Kontenery:'.
+
         self printString: ''.
     ]
 
@@ -986,7 +951,7 @@ Object subclass: Game [
             (dest at: 1) = side ifTrue: [
                 destLoc := dest at: 2.
                 (destLoc = 'fort') ifTrue: [
-                    (inventory includes: 'klucz_do_fortu') ifFalse: [
+                    (inventory includes: itemKluczDoFortu) ifFalse: [
                         self printLines: #('Potrzebujesz klucza, aby tu wejść' '').
                         ^nil
                     ]
@@ -1006,19 +971,28 @@ Object subclass: Game [
         ^nil
     ]
 
-    "Run the game."
-    run [
-        | cmd isUnknown firstCmd cmdSize|
+    isGameOver [
+        ^isGameOver.
+    ]
 
-        self printIntroduction.
-        self printLocationDescription.
-        self printInstructions.
+    end [
+        isGameOver := true.
+    ]
+]
+
+Object subclass: GameRunner [
+    runGame: game [
+        | cmd isUnknown firstCmd cmdSize |
+
+        game printIntroduction.
+        game printLocationDescription.
+        game printInstructions.
 
 
         "Game loop."
-        [isGameOver] whileFalse: [
+        [game isGameOver] whileFalse: [
             isUnknown := true.
-            cmd := self readCommand substrings: ' '.
+            cmd := game readCommand substrings: ' '.
             cmdSize := cmd size.
 
             (cmdSize > 0) ifTrue: [
@@ -1026,27 +1000,27 @@ Object subclass: Game [
 
                 (cmdSize = 2) ifTrue: [
                     firstCmd = 'podnieś' ifTrue: [
-                        self pickup: (cmd at: 2).
+                        game pickup: (cmd at: 2).
                         isUnknown := false
                     ].
 
                     firstCmd = 'upuść' ifTrue: [
-                        self drop: (cmd at: 2).
+                        game drop: (cmd at: 2).
                         isUnknown := false
                     ].
 
                     firstCmd = 'otwórz' ifTrue: [
-                        self open: (cmd at: 2).
+                        game open: (cmd at: 2).
                         isUnknown := false
                     ].
 
                     firstCmd = 'rozmawiaj' ifTrue: [
-                        self talk: (cmd at: 2).
+                        game talk: (cmd at: 2).
                         isUnknown := false
                     ].
      
                     firstCmd = 'atakuj' ifTrue: [
-                        self attack: (cmd at: 2).
+                        game attack: (cmd at: 2).
                         isUnknown := false
                     ].
      
@@ -1057,66 +1031,65 @@ Object subclass: Game [
                     argsDict := Dictionary new.
                     item := (cmd at: 2) asString.
                     container := (cmd at: 4) asString.
-                    argsDict at: 'item' put: item.
-                    argsDict at: 'container' put: container.
 
                     firstCmd = 'wyjmij' ifTrue: [
-                        self takeOut: argsDict.
+                        game takeOutItem: item from: container.
                         isUnknown := false
                     ].
 
                     firstCmd = 'umieść' ifTrue: [
-                        self putInto: argsDict.
+                        game putItem: item into: container.
                         isUnknown := false
                     ].
                 ].
 
                 firstCmd = 'pomoc' ifTrue: [
-                    self printInstructions.
+                    game printInstructions.
                     isUnknown := false
                 ].
 
                 firstCmd = 'ekwipunek' ifTrue: [
-                    self printInventory.
+                    game printInventory.
                     isUnknown := false
                 ].
 
                 firstCmd = 'zadania' ifTrue: [
-                    self printTasks.
+                    game printTasks.
                     isUnknown := false
                 ].
 
                 firstCmd = 'gdzie' ifTrue: [
-                    self printLocationDescription.
+                    game printLocationDescription.
                     isUnknown := false
                 ].
 
                 firstCmd = 'umiejętności' ifTrue: [
-                    self printSkills.
+                    game printSkills.
                     isUnknown := false
                 ].
 
                 firstCmd = 'postacie' ifTrue: [
-                    self printNpcs.
+                    game printNpcs.
                     isUnknown := false
                 ].
 
                 firstCmd = 'koniec' ifTrue: [
-                    isGameOver := true.
+                    game end.
                     isUnknown := false
                 ].
                     
                 (firstCmd = 'n') | (firstCmd = 's') | (firstCmd = 'e') | (firstCmd = 'w') ifTrue: [
-                    self go: firstCmd.
+                    game go: firstCmd.
                     isUnknown := false
                 ].
             ].
 
             isUnknown ifTrue: [
-                self printLines: #('Nieznana komenda' '')
+                game printLines: #('Nieznana komenda' '')
             ]
         ]
     ]
 ]
 
-Game new run.
+game := Game new.
+GameRunner new runGame: game.
