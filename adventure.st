@@ -219,6 +219,19 @@ Object subclass: Game [
     '<Po jakimś czasie budzisz się w klasztorze Tiu-Fiu>'
     ).
 
+    gnomTrialFinished := #(
+    '<Gnom uderza cię w głowę i tracisz przytomność>'
+    '<Po jakimś czasie budzisz się w klasztorze Tiu-Fiu>'
+    ).
+
+    gnomSeenGun := #(
+    '<W ostatnim momencie przypominasz sobie o karabinie od Bobo>'
+    '<Jednym ruchem wyciągasz karabin i przystawiasz go do głowy gnoma>'
+    'Zaraz zaraz, skąd to masz?'
+    'To legendarny złoty karabin mojego dziadka!'
+    'Oddawaj to, i wynoś się'
+    ).
+
     gnomBadAnswer := #(
     'Żaden z ciebie Bananine!'
     'GIŃ!'
@@ -298,6 +311,20 @@ Object subclass: Game [
     boboDefault := #(
     'U! U! A! A! AAAA!!'
     'BANANA!'
+    ).
+
+    boboBananaQuestion := #(
+    'BANANA!!! DAJ BANANA!'
+    '<tak/nie>'
+    ).
+
+    boboRevealGun := #(
+    'DOBRE! BANANA!'
+    '<ucieszony Bobo wskazuje na broń ukrytą w trawie>'
+    ).
+
+    boboSad := #(
+    'Bobo chce banan :('
     ).
 
     andrzejDefault := #(
@@ -415,7 +442,7 @@ Object subclass: Game [
 
     addTask: task [
         self printString: ''.
-        self printString: ('Dodano nowe zadanie: ', task).
+        self printString: ('    * Dodano nowe zadanie: ', task, ' *').
         self printString: ''.
         tasks add: task
     ]
@@ -424,21 +451,21 @@ Object subclass: Game [
         tasks remove: task.
         finishedTasks add: task.
         self printString: ''.
-        self printString: ('Zadanie zakończone: ', task).
+        self printString: ('    * zadanie zakończone: ', task, ' *').
         self printString: ''
     ]
 
     removeFromInventory: item [
         inventory remove: item.
         self printString: ''.
-        self printString: ('Przedmiot ', item, ' został usunięty z ekwipunku.').
+        self printString: ('    * przedmiot ', item, ' został usunięty z ekwipunku.', ' *').
         self printString: ''
     ]
 
     addToInventory: item [
         inventory add: item.
         self printString: ''.
-        self printString: ('Przedmiot ', item, ' został dodany do ekwipunku.').
+        self printString: ('    * przedmiot ', item, ' został dodany do ekwipunku.', ' *').
         self printString: ''
     ]
     
@@ -448,14 +475,16 @@ Object subclass: Game [
         newLocationItems add: item.
         itemsAtLocations at: location put: newLocationItems.
         self printString: ''.
-        self printString: ('Możesz podnieść nowy przedmiot: ', item).
+        self printString: ('    * możesz podnieść nowy przedmiot: ', item, ' *   ').
         self printString: ''
     ]
 
     addSkill: skill [
         skills add: skill.
         self printString: ''.
-        self printString: ('Nowa umiejętność: ', skill)
+        self printString: ('    * nowa umiejętność: ', skill, ' *   ').
+        self printString: ''
+
     ]
 
     kill: npc [
@@ -490,7 +519,7 @@ Object subclass: Game [
                     (self noTaskYet: taskAttackUebe) ifTrue: [
                         self printLines: uebeAfterProba.
                         self addTask: taskAttackUebe.
-                        self addSkill: 'zaklęcie Potassium'.
+                        self addSkill: 'Zaklęcie Potassium'.
                         ^nil
                     ].
                     (self activeTask: taskAttackUebe) ifTrue: [
@@ -538,6 +567,16 @@ Object subclass: Game [
                         ^nil
                     ].
                     self printLines: gnomBadAnswer.
+                    (inventory includes: 'zepsuty_karabin') ifTrue: [
+                        self printLines: gnomSeenGun.
+                        inventory remove: 'zepsuty_karabin'.
+                        location := 'klasztor'.
+                        self printLines: gnomTrialFinished.
+                        self printLocationDescription.
+                        self finishTask: taskTrial.
+
+                        ^nil
+                    ].
                     self die.
                     ^nil
                 ].
@@ -557,11 +596,28 @@ Object subclass: Game [
                     self printLines: kokoUebeQuestionNo.
                     ^nil
                 ].
+                (self finishedTask: taskKillBadGuys) ifTrue: [
+                    self printLines: kokoEndingPhrase.
+                    ^nil
+                ].
                 self printLines: kokoUebeQuestion.
+
                 ^nil
             ]. 
 
-            (npc = 'Bobo') ifTrue: [ " todo"
+            (npc = 'Bobo') ifTrue: [ 
+                (inventory includes: 'banan') ifTrue: [
+                    self printLines: boboBananaQuestion.
+                    cmd := self readCommand.
+                    (cmd = 'tak') ifTrue: [
+                        self printLines: boboRevealGun.
+                        inventory remove: 'banan'.
+                        self newItem: 'zepsuty_karabin'.
+                        ^nil
+                    ].
+                    self printLines: boboSad.
+                    ^nil
+                ].
                 self printLines: boboDefault.
                 ^nil
             ]. 
@@ -614,7 +670,7 @@ Object subclass: Game [
             ]. 
 
             (npc = 'Pająk') ifTrue: [ 
-                (skills includes: 'zaklęcie Potassium') ifTrue: [
+                (skills includes: 'Zaklęcie Potassium') ifTrue: [
                     self printLines: pajakKill.
                     self kill: 'Pająk'.
                     self newItem: 'portfel'.
